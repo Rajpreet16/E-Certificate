@@ -8,6 +8,14 @@ use DB;
 use App\Quotation;
 use App\ParentEventTable as PET;
 use App\EventTable as ET;
+use App\Winners as W;
+use App\Participant as Participant;
+use App\OrganizationCommittee as OrganizationCommittee;
+use App\map_winner_eevents as map_winner_eevents;
+use App\map_organization_eevents as map_organization_eevents;
+use App\map_participant_eevents as map_participant_eevents;
+
+
 use Carbon\Carbon;
 
 class certi extends Controller
@@ -46,16 +54,6 @@ class certi extends Controller
         }
 
 
-        if($request->winnerCSV != null){
-            $winnerCSV                      = $request->file('winnwinnerCSVer');
-        }
-
-        if($request->oragnizationCommitteeCSV != null){
-            $oragnizationCommitteeCSV      = $request->file('oragnizationCommitteeCSV');
-        }
-
-        $participateCSV        = $request->file('participateCSV');
-
         $fetch_row_count = ET::count();
         $parent_event_id = PET::where('event_name',$created_for)->pluck('all_events_id');
         $parent_event_id = $parent_event_id[0];
@@ -66,12 +64,85 @@ class certi extends Controller
             'eevent_id'=> $fetch_row_count +1,
             'event_name'=> $event_name,
             'event_desc'=> $event_description,
-            'e_id'=> $created_by_id,
             'created_at'=> $mytime,
             'created_for'=> $created_for,
-            'all_events_id'=> $parent_event_id
+            'all_events_id'=> $parent_event_id,
+            'e_id'=> $created_by_id,
             )
         );
+
+
+        // Store Winners
+        if($request->winnerCSV != null){
+            $winnerCSV                      = $request->file('winnerCSV');
+            $csvData = file_get_contents($winnerCSV);
+            $rows = array_map('str_getcsv', explode("\n",$csvData));
+            $header = array_shift($rows);
+
+            foreach ($rows as $row) {
+                $row = array_combine($header, $row);
+                $addWinner = new W();
+                $addWinner->winner_id = W::count()+1;
+                $addWinner->certi = '';
+                $addWinner->certi_id = W::count()+1;
+                $addWinner->uid = $row['student-id'];
+                $addWinner->position = $row['position'];
+                $addWinner->save();
+
+                $addmapping = new map_winner_eevents();
+                $addmapping->winner_id = W::count();
+                $addmapping->eevent_id = ET::count();
+                $addmapping->save();
+            }
+            
+        }
+        if($request->oragnizationCommitteeCSV != null){
+            $oragnizationCommitteeCSV      = $request->file('oragnizationCommitteeCSV');
+            $csvData = file_get_contents($oragnizationCommitteeCSV);
+            $rows = array_map('str_getcsv', explode("\n",$csvData));
+            $header = array_shift($rows);
+
+            foreach ($rows as $row) {
+                $row = array_combine($header, $row);
+
+                $addOrganizationCommittee = new OrganizationCommittee();
+                $addOrganizationCommittee->committee_id  = OrganizationCommittee::count()+1;
+                $addOrganizationCommittee->certi = '';
+                $addOrganizationCommittee->certi_id = OrganizationCommittee::count()+1;
+                $addOrganizationCommittee->uid = $row['student-id'];
+                $addOrganizationCommittee->save();
+
+                $addmapping = new map_organization_eevents();
+                $addmapping->committee_id  = OrganizationCommittee::count();
+                $addmapping->eevent_id = ET::count();
+                $addmapping->save();
+            }
+            
+        }
+
+        $participateCSV        = $request->file('participateCSV');
+        $csvData = file_get_contents($participateCSV);
+        $rows = array_map('str_getcsv', explode("\n",$csvData));
+        $header = array_shift($rows);
+
+        foreach ($rows as $row) {
+            $row = array_combine($header, $row);
+
+            $addParticipant = new Participant();
+            $addParticipant->participant_id  = Participant::count()+1;
+            $addParticipant->certi = '';
+            $addParticipant->certi_id = Participant::count()+1;
+            $addParticipant->uid = $row['student-id'];
+            $addParticipant->save();
+
+            $addmapping = new map_participant_eevents();
+            $addmapping->participant_id  = Participant::count();
+            $addmapping->eevent_id = ET::count();
+            $addmapping->save();
+        }
+        
+        
+        
 
         return redirect()->route('home')
         ->with('success','E-CERTI CREATED !');
