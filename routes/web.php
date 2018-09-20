@@ -15,6 +15,29 @@ Route::get('/', [
     'as' => 'home',
     'uses' => 'certi@home'
 ]);
+
 Route::get('/issue', 'certi@issue');
-Route::get('/certiCreate', 'certi@store')->name('certi.store');
-Route::post('/certiCreate', 'certi@store')->name('certi.store');
+
+Route::get('/issue', [
+    'as' => 'issue.get',
+    'uses' => 'certi@issue'
+]);
+
+Route::post('/issue', [
+    'as' => 'home.post',
+    'uses' => 'certi@store'
+]);
+
+Route::get('/createParentEvent', [
+    'as' => 'createParentEvent.get',
+    'uses' => 'certi@createParentEventGet'
+]);
+
+Route::post('/createParentEvent', [
+    'as' => 'createParentEvent.post',
+    'uses' => 'certi@createParentEventPost'
+]);
+
+
+// Route::get('/certiCreate', 'certi@create')->name('certi.create');
+// Route::post('/certiCreate', 'certi@store')->name('certi.store');
